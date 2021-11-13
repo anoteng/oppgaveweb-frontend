@@ -36,6 +36,26 @@
           :nextKey="data.item.key"
       ></VeilederSelector>
     </template>
+    <template #cell(kommisjon)="data">
+      <KommisjonSelector
+        :kommisjon="data.item.kommisjon"
+        :kommisjoner="kommisjoner"
+        :nextKey="data.item.id"
+      >
+
+      </KommisjonSelector>
+    </template>
+    <template #cell(kommisjonsmedlemmer)="data">
+      <KommisjonDiv
+          :kommisjon="data.item.kommisjon"
+          :kommisjoner="kommisjoner"
+          :nextKey="data.item.id"
+          :id="data.item.id"
+          :vurdid="id"
+      >
+
+      </KommisjonDiv>
+    </template>
     <template #table-busy>
       <div class="text-center text-danger my-2">
         <b-spinner class="align-middle"></b-spinner>
@@ -52,19 +72,46 @@ import Api from '@/api.js'
 import LockedSelector from '@/components/LockedSelector'
 import FaggruppeSelector from'@/components/FaggruppeSelector'
 import VeilederSelector from '@/components/VeilederSelector'
+import KommisjonSelector from '@/components/KommisjonSelector'
+import KommisjonDiv from "@/components/KommisjonDiv";
 export default {
   name: "Enkeltemne",
   async created(){
     await this.refresh()
+    await this.refreshKommisjoner()
+    this.$root.$on('kommisjonCreated', async ()=>{
+      await this.refreshKommisjoner()
+    })
+    this.$root.$on('kommisjonChanged', async ()=>{
+      await this.refreshKommisjoner()
+    })
+    this.$root.$on('faggruppeChanged', (faggruppe, student)=>{
+      this.setFaggruppe(faggruppe, student)
+    })
   },
   components: {
     LockedSelector,
     FaggruppeSelector,
-    VeilederSelector
+    VeilederSelector,
+    KommisjonSelector,
+    KommisjonDiv
   },
   methods: {
     refreshVeiledere(id){
       this.componentKey[id] += 1
+    },
+    async refreshKommisjoner(){
+      let kommisjoner = await Api.get('kommisjoner', 'filter=vurdenhet,eq,' + this.id)
+      for(let kommisjon of kommisjoner){
+        let members = await Api.get('kommisMembers', 'filter=kommisId,eq,' + kommisjon.id + '&join=brukere')
+        this.kommisjoner.push({
+          id: kommisjon.id,
+          kommisjonsnr: kommisjon.kommisjonsnr,
+          vurdenhet: kommisjon.vurdenhet,
+          members: members
+        })
+      }
+      console.log(this.kommisjoner)
     },
     async refresh(){
       this.toggleBusy()
@@ -72,18 +119,7 @@ export default {
       await this.getFaggrupper()
       await this.getStudents()
       this.toggleBusy()
-      this.$root.$on('TermChanged', ()=>{
-        this.students = []
-        this.getStudents()
-      })
-      this.$root.$on('faggruppeChanged', (faggruppe, student)=>{
-        this.setFaggruppe(faggruppe, student)
-        // this.refreshVeiledere(student)
-        // let nyStudent = this.students[nextKey]
-        // nyStudent.veileder_faggruppe = faggruppe
-        // this.$set(this.students, nextKey, nyStudent)
 
-      })
     },
     toggleLocked(id, state){
       console.log(id, state)
@@ -135,7 +171,7 @@ export default {
           veileder_faggruppe = rec.veileder_faggruppe.id
         }
         this.componentKey[rec.studentid.id] = rec.studentid.id + veileder_faggruppe
-        console.dir(this.componentKey)
+        // console.dir(this.componentKey)
         let index = this.students.push({
           StudId: rec.studentid.id,
           id: rec.id,
@@ -146,6 +182,7 @@ export default {
           veileder_faggruppe: veileder_faggruppe,
           faggrupper: this.faggrupper,
           kommisjon: rec.kommisjon,
+          kommisjoner: this.kommisjoner,
           kommisjonsmedlemmer: rec.kommisjon,
           locked: rec.locked
             }) -1
@@ -163,6 +200,7 @@ export default {
       value: [],
       students: [],
       faggrupper: {},
+      kommisjoner: [],
       groups: [],
       veiledere: {},
       id: this.$route.params.id,
