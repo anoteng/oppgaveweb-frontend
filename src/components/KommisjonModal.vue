@@ -13,7 +13,8 @@
       <div class="d-block text-center">
         <h3>Hello From This Modal!</h3>
       </div>
-      <b-button class="mt-3" block @click="closeModal()">Close Me</b-button>
+      <b-button class="mt-3" block @click="closeModal(false)">Avbryt</b-button>
+      <b-button class="mt-3" block @click="closeModal(true)">Lagre</b-button>
     </b-modal>
   </div>
 </template>
@@ -30,9 +31,13 @@ export default {
     }
   },
   methods: {
-    closeModal(){
+    async closeModal(save){
+      if(save){
+        //Lagre ny kommisjon
+      }
       this.$bvModal.hide('bv-modal-example')
       this.myToggle=false
+
     }
   }
 }
