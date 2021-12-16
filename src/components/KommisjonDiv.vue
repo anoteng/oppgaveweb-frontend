@@ -1,10 +1,13 @@
 <template>
   <div>
     <kommisjon-modal
-      :id="this.kommisjon"
+      :kommisjon="this.kommisjon"
+      :brukere="this.brukere"
+      :faggrupper="this.faggrupper"
+      @updateKommisjon="this.getKommisjonMembers"
     ></kommisjon-modal>
     <span
-        v-for="item in this.kommisjon.members"
+        v-for="item in this.kommisjon.kommisMembers"
         :key="item.id">
       <a :href="'mailto:' + item.userID.email">{{item.userID.navn}}, {{item.userID.fornavn}}</a>,
     </span>
@@ -26,7 +29,7 @@ export default {
       }
     })
   },
-  props: ['kommisjon', 'nextKey'],
+  props: ['kommisjon', 'nextKey', 'brukere', 'faggrupper'],
   methods: {
     async getKommisjonMembers(){
       this.kommisjonMembers = []

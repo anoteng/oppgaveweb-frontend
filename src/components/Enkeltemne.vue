@@ -17,24 +17,21 @@
       >
       </LockedSelector>
     </template>
-    <template #cell(veileder_faggruppe)="data">
-      <FaggruppeSelector
-        :selected="data.item.veileder_faggruppe"
-        :faggrupper="data.item.faggrupper"
-        :id="data.item.id"
-        :nextKey="data.item.key"
-      ></FaggruppeSelector>
-    </template>
+<!--    <template #cell(veileder_faggruppe)="data">-->
+<!--&lt;!&ndash;      {{this.faggrupper[data.item.veileder.faggruppe].forkortelse}}&ndash;&gt;-->
+<!--      {{data.item.veileder !== null ? faggrupper : 'false'}}-->
+
+<!--    </template>-->
     <template #cell(veileder)="data">
       <VeilederSelector
-          :selected="data.item.veileder"
-          :veiledere="data.item.veiledere"
-          :faggruppe="data.item.veileder_faggruppe"
-          :id="data.item.id"
-          v-if="data.item.veileder_faggruppe != null"
-          :key="data.item.key"
-          :nextKey="data.item.key"
+          :preSelected="data.item.veileder"
+          :veiledere="brukere"
+          onlySupervisors="true"
+          @sensorAdded="settVeileder($event, data.item.id)"
       ></VeilederSelector>
+    </template>
+    <template #cell(gruppe)="data">
+      <input type="number" :value="data.item.gruppe" style="width:50%" maxlength="2"/>
     </template>
     <template #cell(kommisjon)="data">
       <KommisjonSelector
@@ -52,6 +49,9 @@
           :nextKey="data.item.id"
           :id="data.item.id"
           :vurdid="id"
+          :brukere="brukere"
+          :faggrupper="faggrupper"
+          @kommisjonChanged="refreshKommisjoner"
       >
 
       </KommisjonDiv>
@@ -70,35 +70,41 @@
 <script>
 import Api from '@/api.js'
 import LockedSelector from '@/components/LockedSelector'
-import FaggruppeSelector from'@/components/FaggruppeSelector'
-import VeilederSelector from '@/components/VeilederSelector'
+import VeilederSelector from '@/components/VeilederSelector2'
 import KommisjonSelector from '@/components/KommisjonSelector'
 import KommisjonDiv from "@/components/KommisjonDiv";
 export default {
   name: "Enkeltemne",
   async created(){
+    await this.getFaggrupper()
+
     await this.refresh()
     await this.refreshKommisjoner()
     this.$root.$on('kommisjonCreated', async ()=>{
       await this.refreshKommisjoner()
     })
-    this.$root.$on('kommisjonChanged', async ()=>{
-      await this.refreshKommisjoner()
-    })
+
     this.$root.$on('faggruppeChanged', (faggruppe, student)=>{
       this.setFaggruppe(faggruppe, student)
+    })
+    this.$root.$on('updateBrukere', async ()=>{
+      await this.getBrukere()
     })
   },
   components: {
     LockedSelector,
-    FaggruppeSelector,
     VeilederSelector,
     KommisjonSelector,
     KommisjonDiv
   },
+  computed: {
+
+  },
   methods: {
-    refreshVeiledere(id){
-      this.componentKey[id] += 1
+
+    settVeileder(veileder, id){
+      console.log(id, veileder)
+      Api.update('vurderingsmelding', id, 'veileder=' + veileder)
     },
     async refreshKommisjoner(){
       let kommisjoner = await Api.get('kommisjoner', 'filter=vurdenhet,eq,' + this.id)
@@ -115,42 +121,31 @@ export default {
     },
     async refresh(){
       this.toggleBusy()
-      await this.getVeiledere()
-      await this.getFaggrupper()
+      // await this.getFaggrupper()
       await this.getStudents()
+      await this.getBrukere()
+
       this.toggleBusy()
 
+    },
+    async getBrukere(){
+      let brukere = await Api.get('brukere', 'filter=active,eq,1&join=faggrupper&join=roller&order=navn&order=fornavn')
+      for(let item of brukere){
+        this.brukere[item.id] = item
+      }
     },
     toggleLocked(id, state){
       console.log(id, state)
     },
-    async getVeiledere(){
-      this.veiledere = await Api.get('brukere',
-          'filter=active,eq,1&filter=rolle,eq,2')
-      for(let i in this.veiledere){
-        this.veiledere[i].fullName = this.veiledere[i].navn + ', ' + this.veiledere[i].fornavn
-      }
-    },
-    async setFaggruppe(faggruppe, vurdid){
-      let data = {}
-      if(faggruppe == 'null'){
-        data = {
-          'veileder_faggruppe': null
-        }
-      }else{
-        data = {
-          'veileder_faggruppe': faggruppe
-        }
-      }
-      let res = await Api.update('vurderingsmelding', vurdid, data)
-      console.log(res)
-    },
-    async getFaggrupper(){
-      this.faggrupper = await Api.get('faggrupper', 'filter=active,eq,1')
-      // this.faggrupper = records
-    },
     toggleBusy() {
       this.isBusy = !this.isBusy
+    },
+    async getFaggrupper(){
+      let faggrupper = await Api.get('faggrupper', 'filter=active,eq,1')
+      for(let i of faggrupper){
+        this.faggrupper[i.id] = i
+      }
+      // this.faggrupper = records
     },
     async getStudents(){
       let records = await Api.get('vurderingsmelding',
@@ -162,25 +157,21 @@ export default {
       for(let group of groups){
         console.log(group)
       }
+
       for(let rec of records) {
-        // console.log(rec)
         let veileder_faggruppe
-        if(rec.veileder_faggruppe == null){
-          veileder_faggruppe = null
+        if(rec.veileder == null){
+          veileder_faggruppe = ''
         }else{
-          veileder_faggruppe = rec.veileder_faggruppe.id
+          veileder_faggruppe = this.faggrupper[rec.veileder.faggruppe].forkortelse
         }
-        this.componentKey[rec.studentid.id] = rec.studentid.id + veileder_faggruppe
-        // console.dir(this.componentKey)
         let index = this.students.push({
           StudId: rec.studentid.id,
           id: rec.id,
           navn: rec.studentid.navn,
           epost: rec.studentid.epost,
           veileder: rec.veileder,
-          veiledere: this.veiledere,
           veileder_faggruppe: veileder_faggruppe,
-          faggrupper: this.faggrupper,
           kommisjon: rec.kommisjon,
           kommisjoner: this.kommisjoner,
           kommisjonsmedlemmer: rec.kommisjon,
@@ -192,7 +183,7 @@ export default {
   },
   data(){
     return {
-      componentKey: {},
+      brukere: {},
       isBusy: false,
       sortBy: 'navn',
       sortDesc: false,
@@ -202,17 +193,17 @@ export default {
       faggrupper: {},
       kommisjoner: [],
       groups: [],
-      veiledere: {},
       id: this.$route.params.id,
       fields: [
         {key: "StudId", title: "Studnr.", sortable: false},
         {key: "navn", sortable: true},
         {key: "epost", sortable: true},
         {key: "veileder_faggruppe", label: "Veiledning faggruppe", sortable: true},
-        {key: "veileder", sortable: true},
+        {key: "veileder", sortable: true, thStyle: {width: "30%"}},
         {key: "kommisjon", sortable: true},
         {key: "kommisjonsmedlemmer", sortable: true},
-        {key: "locked", sortable: true, label: 'Låst'}
+        {key: "gruppe", sortable: true, label: 'Gruppe'},
+        {key: "locked", sortable: true, label: 'Låst'},
       ]
     }
   }

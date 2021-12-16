@@ -16,7 +16,7 @@
 <script>
 export default {
   name: "FaggruppeSelector",
-  props: ['faggrupper', 'selected', 'id', 'nextKey'],
+  props: ['faggrupper', 'selected', 'id'],
   data(){
     return {
       selectedValue: null
@@ -24,8 +24,7 @@ export default {
   },
   methods: {
     changedFaggruppe(selected, id){
-      // console.log(selected)
-      this.$root.$emit('faggruppeChanged', selected, id, this.nextKey)
+      this.$emit('changedFaggruppe', selected, id)
     }
   },
   mounted(){

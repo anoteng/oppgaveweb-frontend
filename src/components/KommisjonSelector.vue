@@ -37,7 +37,7 @@ export default {
   },
   methods: {
     changedKommisjon(value){
-      this.$root.$emit('kommisjonChanged', value, this.nextKey)
+      this.$emit('kommisjonChanged', value, this.nextKey)
       Api.update('vurderingsmelding', this.nextKey, {
         kommisjon: value.id
       })

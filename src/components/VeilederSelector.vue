@@ -1,14 +1,13 @@
 <template>
- <b-form-select
+ <v-select
   :v-model="selectedValue"
-  :options="this.veiledereComputed"
-  v-if="faggruppe == this.faggruppe"
+  :options="this.veiledere"
   value-field="id"
   text-field="fullName"
   @change="changedVeileder(selectedValue, id)"
  >
 
- </b-form-select>
+ </v-select>
 </template>
 
 <script>
