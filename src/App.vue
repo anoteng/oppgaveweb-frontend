@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <b-container>
+    <b-container fluid>
       <NavBar/>
       <router-view></router-view>
     </b-container>
@@ -25,13 +25,8 @@ export default {
 </script>
 
 <style>
-#app {
-  /*font-family: Avenir, Helvetica, Arial, sans-serif;*/
-  /*-webkit-font-smoothing: antialiased;*/
-  /*-moz-osx-font-smoothing: grayscale;*/
-
-  /*color: #2c3e50;*/
-  /*margin-top: 60px;*/
-.sr-only {display: none !important;}
+.container {
+  margin-left: 100px;
+  margin-right: 100px;
 }
 </style>

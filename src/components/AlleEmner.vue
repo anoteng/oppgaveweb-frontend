@@ -22,6 +22,7 @@
 
 <script>
 import Api from '@/api.js'
+import * as Data from '@/dataClass.js'
 export default {
   name: "AlleEmner",
   components: {}
@@ -55,7 +56,15 @@ export default {
     }
   },
   async created(){
-    await this.getCourses()
+    this.emner = new Data.emner(this.$session.get('currentTerm'))
+    this.emner.loadCourses()
+    .then(()=>{
+      this.courses.loadCourseStats()
+      .then(()=>{
+        this.courses = this.emner.courses
+      })
+    })
+
     this.$root.$on('TermChanged', ()=>{
       this.courses = []
       this.getCourses()

@@ -27,7 +27,13 @@ export default {
         })
     },
     get(endpoint, options){
-      return this.execute('get', '/records/' + endpoint + '?' + options)
+        const promise = new Promise((resolve) => {
+            resolve(this.execute('get', '/records/' + endpoint + '?' + options))
+        })
+      return promise
+    },
+    put(endpoint, data){
+        return this.execute('post', '/records/' + endpoint, data)
     },
     update(endpoint, id, data){
         return this.execute('put', '/records/' + endpoint + '/' + id, data)

@@ -32,6 +32,7 @@
 
 <script>
 import VeilederSelector from '@/components/VeilederSelector2'
+import Api from '@/api'
 export default {
   name: "KommisjonModal",
   props: ['kommisjon', 'brukere'],
@@ -47,11 +48,13 @@ export default {
       console.log('faggruppe: ' + id)
       this.faggruppe = id[0]
     },
-    sensorAdded(sensor){
+    async sensorAdded(sensor){
       console.log('sensorAdded: ' + sensor)
+      await Api.put('kommisMembers', {kommisId: this.kommisjon.id, userID: sensor})
     },
     async closeModal(save){
       if(save){
+        this.$emit('refreshData')
         //Lagre ny kommisjon
       }
       this.$bvModal.hide('bv-modal-example')

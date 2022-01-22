@@ -5,6 +5,7 @@
       :brukere="this.brukere"
       :faggrupper="this.faggrupper"
       @updateKommisjon="this.getKommisjonMembers"
+      @refreshData="this.$emit('kommisjonChanged')"
     ></kommisjon-modal>
     <span
         v-for="item in this.kommisjon.kommisMembers"

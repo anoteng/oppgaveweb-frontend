@@ -110,14 +110,21 @@ export default {
       let kommisjoner = await Api.get('kommisjoner', 'filter=vurdenhet,eq,' + this.id)
       for(let kommisjon of kommisjoner){
         let members = await Api.get('kommisMembers', 'filter=kommisId,eq,' + kommisjon.id + '&join=brukere')
+        let desc = members.map(function(el){
+          return el.userID.navn
+        })
+        desc = desc.join(', ')
         this.kommisjoner.push({
           id: kommisjon.id,
           kommisjonsnr: kommisjon.kommisjonsnr,
           vurdenhet: kommisjon.vurdenhet,
-          members: members
+          members: members,
+          desc: desc
         })
+        this.kommisjoner.splice(0, 0, {kommisjonsnr: 'Ny kommisjon', desc: '', id: -1})
+
       }
-      console.log(this.kommisjoner)
+      // console.log(this.kommisjoner)
     },
     async refresh(){
       this.toggleBusy()
@@ -199,8 +206,8 @@ export default {
         {key: "navn", sortable: true},
         {key: "epost", sortable: true},
         {key: "veileder_faggruppe", label: "Veiledning faggruppe", sortable: true},
-        {key: "veileder", sortable: true, thStyle: {width: "30%"}},
-        {key: "kommisjon", sortable: true},
+        {key: "veileder", sortable: true, thStyle: {width: "400px"}},
+        {key: "kommisjon", sortable: true, thStyle: {width: "300px"}},
         {key: "kommisjonsmedlemmer", sortable: true},
         {key: "gruppe", sortable: true, label: 'Gruppe'},
         {key: "locked", sortable: true, label: 'Låst'},

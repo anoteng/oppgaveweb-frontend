@@ -63,5 +63,13 @@ export default {
 </script>
 
 <style scoped>
+.multiselect .multiselect__content-wrapper {
+  min-width: 100%;
+  width: auto;
+  border-top: 1px solid #e8e8e8;
+}
 
+.multiselect--active .multiselect__tags {
+  border-bottom: none;
+}
 </style>
